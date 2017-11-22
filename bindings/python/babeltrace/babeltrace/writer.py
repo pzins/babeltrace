@@ -1501,7 +1501,15 @@ class Event:
         clock = Clock.__new__(Clock)
         clock._c = bt2_clock
         return clock
-
+    
+        
+    def tid(self, tid):
+        try:
+            self._e.stream_event_context_field["vtid"] = tid
+            
+        except:
+            raise TypeError('Could not get field from stream event context.')
+                
     def payload(self, field_name):
         """
         Returns the :class:`Field` object named *field_name* in this
@@ -1618,9 +1626,21 @@ class StreamClass:
             packet_context_type.append_field('content_size', uint64_ft)
             packet_context_type.append_field('packet_size', uint64_ft)
             packet_context_type.append_field('events_discarded', uint64_ft)
+            # packet_context_type.append_field('cpu_id', uint32_ft)
+
+            
+            uint32_ft_vtid = bt2.IntegerFieldType(32, is_signed=True, alignment = 8, base = 10)
+            event_context_type = bt2.StructureFieldType()
+            event_context_type.append_field('vtid', uint32_ft_vtid)
+            
             sc = bt2.StreamClass(name,
                                  event_header_field_type=event_header_type,
-                                 packet_context_field_type=packet_context_type)
+                                 packet_context_field_type=packet_context_type,
+                                 event_context_field_type=event_context_type)
+                                 
+            # sc = bt2.StreamClass(name,
+            #                      event_header_field_type=event_header_type,
+            #                      packet_context_field_type=packet_context_type)
             self._stream_class = sc
         except:
             raise ValueError("Stream class creation failed.")

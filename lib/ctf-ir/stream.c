@@ -302,6 +302,42 @@ end:
 }
 
 static
+int set_packet_cpu_id(struct bt_stream *stream)
+{
+	int ret = 0;
+	struct bt_field *field = bt_field_structure_get_field_by_name(
+		stream->packet_context, "cpu_id");
+
+	assert(stream);
+
+	if (!field) {
+		/* No packet size field found. Not an error, skip. */
+		BT_LOGV("No field named `packet_size` in packet context: skipping: "
+			"stream-addr=%p, stream-name=\"%s\"",
+			stream, bt_stream_get_name(stream));
+		goto end;
+	}
+
+	ret = bt_field_unsigned_integer_set_value(field,
+		0);
+	if (ret) {
+		BT_LOGW("Cannot set packet context field's `packet_size` integer field's value: "
+			"stream-addr=%p, stream-name=\"%s\", field-addr=%p, value=%" PRIu64,
+			stream, bt_stream_get_name(stream),
+			field, stream->pos.packet_size);
+	} else {
+		BT_LOGV("Set packet context field's `packet_size` field's value: "
+			"stream-addr=%p, stream-name=\"%s\", field-addr=%p, value=%" PRIu64,
+			stream, bt_stream_get_name(stream),
+			field, stream->pos.packet_size);
+	}
+
+end:
+	bt_put(field);
+	return ret;
+}
+
+static
 int set_packet_context_content_size(struct bt_stream *stream)
 {
 	int ret = 0;
@@ -605,7 +641,8 @@ int auto_populate_packet_context(struct bt_stream *stream)
 			stream, bt_stream_get_name(stream));
 		goto end;
 	}
-
+	
+	// ret = set_packet_cpu_id(stream);
 	ret = set_packet_context_content_size(stream);
 	if (ret) {
 		BT_LOGW("Cannot set packet context's content size field: "
